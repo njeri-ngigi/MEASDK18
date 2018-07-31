@@ -207,6 +207,7 @@ public class StartActivity extends AppCompatActivity{
 
         Intent intent = new Intent(StartActivity.this, HomeActivity.class);
         startActivity(intent);
+        finish();
     }
 
     private void setupSpinner(){

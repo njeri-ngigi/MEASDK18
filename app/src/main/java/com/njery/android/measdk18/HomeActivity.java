@@ -72,6 +72,7 @@ public class HomeActivity extends AppCompatActivity
         if (userPreferences == null){
             Intent intent = new Intent(HomeActivity.this, StartActivity.class);
             startActivity(intent);
+            finish();
         } else {
             setContentView(R.layout.activity_home);
 

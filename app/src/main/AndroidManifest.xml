@@ -18,13 +18,15 @@
             android:authorities="com.njery.android.measdk18"
             android:exported="false"/>
 
-        <activity android:name=".StartActivity">
+        <activity android:name=".StartActivity"
+            android:noHistory="true">
         </activity>
         <activity android:name=".MainUserActivity">
         </activity>
         <activity
             android:name=".HomeActivity"
             android:launchMode="singleTop"
+            android:noHistory="true"
             android:theme="@style/AppTheme.NoActionBar">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
