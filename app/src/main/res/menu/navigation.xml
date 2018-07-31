@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <item
+        android:id="@+id/navigation_user_info"
+        android:icon="@drawable/ic_user_info"
+        android:title="@string/user_details_page"/>
+
+    <item
+        android:id="@+id/navigation_emergency_contacts"
+        android:icon="@drawable/ic_emergency_contact"
+        android:title="@string/emergency_contacts_page"/>
+
+    <item
+        android:id="@+id/navigation_medical_info"
+        android:icon="@drawable/ic_medical_info"
+        android:title="@string/medical_info_page"/>
+
+</menu>
