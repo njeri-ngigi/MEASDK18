@@ -1,6 +1,7 @@
 package com.njery.android.measdk18;
 
 import android.Manifest;
+import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.LoaderManager;
 import android.content.ContentUris;
@@ -14,7 +15,9 @@ import android.net.Uri;
 import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.view.ContextMenu;
 import android.view.Menu;
+import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.AdapterView;
@@ -33,83 +36,129 @@ public class ContactsActivity extends AppCompatActivity
     private static final int REQUEST_CALL_PERMISSION = 2;
     MeaCursorAdapter mCursorAdapter;
 
-     @Override
+    private ListView mContactsListView;
+
+    @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_contacts);
 
         setTitle(R.string.title_contacts);
 
-        ListView contactsListView = findViewById(R.id.lv_contacts);
+        mContactsListView = findViewById(R.id.lv_contacts);
 
         View emptyView = findViewById(R.id.empty_view);
-        contactsListView.setEmptyView(emptyView);
+        mContactsListView.setEmptyView(emptyView);
 
         mCursorAdapter = new MeaCursorAdapter(this, null);
-        contactsListView.setAdapter(mCursorAdapter);
+        mContactsListView.setAdapter(mCursorAdapter);
 
-         AdapterView.OnItemClickListener listener = new AdapterView.OnItemClickListener() {
+        this.registerForContextMenu(mContactsListView);
+        AdapterView.OnItemClickListener listener = new AdapterView.OnItemClickListener() {
 
              @Override
              public void onItemClick(AdapterView<?> parent, final View view, int position, long id) {
-                 final Uri currentUri = ContentUris.withAppendedId(ContactsEntry.CONTENT_URI, id);
-
-                 PopupMenu popup = new PopupMenu(getBaseContext(), view);
-                 popup.getMenuInflater().inflate(R.menu.contacts_options, popup.getMenu());
-                 //popup.setGravity(1);
-                 popup.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener() {
-                     @Override
-                     public boolean onMenuItemClick(MenuItem item) {
-                         int itemId = item.getItemId();
-
-                         switch(itemId){
-                             case R.id.action_call:
-                                 TextView nameTextView = view.findViewById(R.id.tv_contact_name);
-                                 String name = nameTextView.getText().toString();
-
-                                 TextView numberTextView = view.findViewById(R.id.tv_contact_number);
-                                 String number = numberTextView.getText().toString();
-
-                                 Toast.makeText(ContactsActivity.this,
-                                         "Calling " + name, Toast.LENGTH_SHORT).show();
-                                 call(number);
-
-                                 return true;
-                             case R.id.action_edit:
-                                 Intent intent = new Intent(ContactsActivity.this, ContactsEditActivity.class);
-
-                                 intent.setData(currentUri);
-                                 startActivity(intent);
-
-                                 return true;
-
-                             case R.id.action_delete:
-                                 showDeleteConfirmationDialog(currentUri);
-
-                                 return true;
-
-                             default:
-                                     Toast.makeText(ContactsActivity.this,
-                                             "Nothing here", Toast.LENGTH_SHORT).show();
-                         }
-                         return true;
-                     }
-                 });
-                 popup.show();
+                 Toast.makeText(ContactsActivity.this,
+                         "Long press for more options", Toast.LENGTH_SHORT).show();
+//                 PopupMenu popup = new PopupMenu(getBaseContext(), view);
+//                 popup.getMenuInflater().inflate(R.menu.contacts_options, popup.getMenu());
+//                 //popup.setGravity(1);
+//                 popup.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener() {
+//                     @Override
+//                     public boolean onMenuItemClick(MenuItem item) {
+//                         int itemId = item.getItemId();
+//
+//                         switch(itemId){
+//                             case R.id.action_call:
+//                                 TextView nameTextView = view.findViewById(R.id.tv_contact_name);
+//                                 String name = nameTextView.getText().toString();
+//
+//                                 TextView numberTextView = view.findViewById(R.id.tv_contact_number);
+//                                 String number = numberTextView.getText().toString();
+//
+//                                 Toast.makeText(ContactsActivity.this,
+//                                         "Calling " + name, Toast.LENGTH_SHORT).show();
+//                                 call(number);
+//
+//                                 return true;
+//                             case R.id.action_edit:
+//                                 Intent intent = new Intent(ContactsActivity.this, ContactsEditActivity.class);
+//
+//                                 intent.setData(mCurrentUri);
+//                                 startActivity(intent);
+//
+//                                 return true;
+//
+//                             case R.id.action_delete:
+//                                 showDeleteConfirmationDialog(mCurrentUri);
+//
+//                                 return true;
+//
+//                             default:
+//                                     Toast.makeText(ContactsActivity.this,
+//                                             "Nothing here", Toast.LENGTH_SHORT).show();
+//                         }
+//                         return true;
+//                     }
+//                 });
+//                 popup.show();
              }
-         };
+        };
+        mContactsListView.setOnItemClickListener(listener);
 
-        contactsListView.setOnItemClickListener(listener);
-        contactsListView.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
-            @Override
-            public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id) {
-                Toast.makeText(ContactsActivity.this, "You have long pressed", Toast.LENGTH_SHORT).show();
-            return true;
-            }
-        });
         getLoaderManager().initLoader(CONTACTS_LOADER, null, this);
+    }
 
+    @Override
+    public void onCreateContextMenu(ContextMenu menu, View v, ContextMenu.ContextMenuInfo menuInfo) {
 
+        MenuInflater inflater = getMenuInflater();
+        inflater.inflate(R.menu.contacts_options, menu);
+        menu.setHeaderTitle("Options");
+
+        super.onCreateContextMenu(menu, v, menuInfo);
+    }
+
+    @Override
+    public boolean onContextItemSelected(MenuItem item) {
+        AdapterView.AdapterContextMenuInfo info = (AdapterView.AdapterContextMenuInfo) item.getMenuInfo();
+        int index = info.position + 1;
+        View view = info.targetView;
+        Uri currentUri = ContentUris.withAppendedId(ContactsEntry.CONTENT_URI, index);
+
+        int itemId = item.getItemId();
+
+        switch(itemId){
+            case R.id.action_call:
+                TextView nameTextView = view.findViewById(R.id.tv_contact_name);
+                String name = nameTextView.getText().toString();
+
+                TextView numberTextView = view.findViewById(R.id.tv_contact_number);
+                String number = numberTextView.getText().toString();
+
+                Toast.makeText(ContactsActivity.this,
+                        "Calling " + name, Toast.LENGTH_SHORT).show();
+                call(number);
+
+                return true;
+            case R.id.action_edit:
+                Intent intent = new Intent(ContactsActivity.this, ContactsEditActivity.class);
+
+                intent.setData(currentUri);
+                startActivity(intent);
+
+                return true;
+
+            case R.id.action_delete:
+                showDeleteConfirmationDialog(currentUri);
+
+                return true;
+
+            default:
+                Toast.makeText(ContactsActivity.this,
+                        "Nothing here", Toast.LENGTH_SHORT).show();
+        }
+        return super.onContextItemSelected(item);
     }
 
     private void call(String number){

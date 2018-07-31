@@ -100,7 +100,7 @@ public class ContactsEditActivity extends AppCompatActivity
                         R.string.save_error, Toast.LENGTH_LONG).show();
             else{
                 Toast.makeText(this,
-                        R.string.save_success, Toast.LENGTH_SHORT).show();
+                        R.string.save_contact_success, Toast.LENGTH_SHORT).show();
                 finish();
             }
         }
