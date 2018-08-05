@@ -36,6 +36,12 @@ public class ProfileActivity extends AppCompatActivity
 
         setTitle(R.string.title_profile);
 
+        TextView mSosTV = findViewById(R.id.tv_user_sos);
+        String sos = MeaSharedPreferences.getPrefUserSos(this);
+        mSosTV.setText(sos);
+
+
+
         Button mGoToContacts = findViewById(R.id.go_to_contacts);
         mGoToContacts.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -79,14 +85,35 @@ public class ProfileActivity extends AppCompatActivity
         builder.setPositiveButton(R.string.delete, new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {
+//                Uri contactsUri = ContactsEntry.CONTENT_URI;
+//                Uri detailsUri = MeaEntry.CONTENT_URI;
+
+                MeaDbHelper meaDbHelper = new MeaDbHelper(ProfileActivity.this);
+                SQLiteDatabase db = meaDbHelper.getWritableDatabase();
+                db.execSQL("DROP TABLE " + ContactsEntry.TABLE_NAME_CONTACTS);
+                db.execSQL("DROP TABLE " + MeaEntry.TABLE_NAME);
+                db.execSQL(MeaDbHelper.CREATE_TABLE_DETAILS);
+                db.execSQL(MeaDbHelper.CREATE_TABLE_CONTACTS);
+//                int rowsDeleted = getContentResolver().delete(contactsUri, null, null);
+//                int detailsDeleted = getContentResolver().delete(detailsUri, null, null);
+//
+//                if(rowsDeleted<0 || detailsDeleted<0){
+//                    Toast.makeText(ProfileActivity.this,
+//                            "Failed to delete account. \n Try Again!", Toast.LENGTH_LONG).show();
+//                    return;
+//                }
                 Toast.makeText(ProfileActivity.this,
                         "Account deleted successfully!", Toast.LENGTH_SHORT).show();
+
+                MeaSharedPreferences.setPrefUserSos(ProfileActivity.this,null);
+                MeaSharedPreferences.setPrefUserName(ProfileActivity.this, null);
+                MeaSharedPreferences.setStoredQuery(ProfileActivity.this, null);
+
+                Intent intent = new Intent(ProfileActivity.this, HomeActivity.class);
+                startActivity(intent);
+
                 finish();
-//                MeaSharedPreferences.setPrefUserSos(ProfileActivity.this,null);
-//                MeaSharedPreferences.setPrefUserName(ProfileActivity.this, null);
-//                MeaSharedPreferences.setStoredQuery(ProfileActivity.this, null);
-//
-//                finish();
+
             }
         });
 
@@ -133,14 +160,11 @@ public class ProfileActivity extends AppCompatActivity
             TextView mBloodTypeTV = findViewById(R.id.tv_user_blood_type);
             TextView mMedicalConditionsTV = findViewById(R.id.tv_user_medical_conditions);
             TextView mAllergiesTV = findViewById(R.id.tv_user_allergies);
-            TextView mSosTV = findViewById(R.id.tv_user_sos);
 
             String name = cursor.getString(cursor.getColumnIndexOrThrow(MeaEntry.COLUMN_FULL_NAME));
             Integer bloodTypeInt = cursor.getInt(cursor.getColumnIndexOrThrow(MeaEntry.COLUMN_BLOOD_TYPE));
             String medicalConditions = cursor.getString(cursor.getColumnIndexOrThrow(MeaEntry.COLUMN_MEDICAL_CONDITIONS));
             String allergies = cursor.getString(cursor.getColumnIndexOrThrow(MeaEntry.COLUMN_ALLERGIES));
-
-            String sos = MeaSharedPreferences.getPrefUserSos(this);
 
             if(TextUtils.isEmpty(medicalConditions)){
                 medicalConditions = "None";
@@ -175,7 +199,6 @@ public class ProfileActivity extends AppCompatActivity
             mBloodTypeTV.setText(bloodType);
             mMedicalConditionsTV.setText(medicalConditions);
             mAllergiesTV.setText(allergies);
-            mSosTV.setText(sos);
         }
 
     }

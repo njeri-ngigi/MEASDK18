@@ -136,6 +136,18 @@ public class HomeActivity extends AppCompatActivity
         }
     }
 
+    private void call(String number){
+        Intent callIntent = new Intent(Intent.ACTION_CALL);
+        callIntent.setData(Uri.parse("tel: " + number));
+
+        if (ActivityCompat.checkSelfPermission(HomeActivity.this,
+                Manifest.permission.CALL_PHONE) != PackageManager.PERMISSION_GRANTED){
+            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.CALL_PHONE},
+                    REQUEST_CALL_PERMISSION);
+        }
+        startActivity(callIntent);
+    }
+
     private void sendSOS(String message){
         PendingIntent pendingIntent = PendingIntent.getActivity(this, 0,
                 new Intent(this, HomeActivity.class), 0);
@@ -218,18 +230,6 @@ public class HomeActivity extends AppCompatActivity
 
     }
 
-    private void call(String number){
-        Intent callIntent = new Intent(Intent.ACTION_CALL);
-        callIntent.setData(Uri.parse("tel: " + number));
-
-        if (ActivityCompat.checkSelfPermission(HomeActivity.this,
-                Manifest.permission.CALL_PHONE) != PackageManager.PERMISSION_GRANTED){
-            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.CALL_PHONE},
-                    REQUEST_CALL_PERMISSION);
-        }
-        startActivity(callIntent);
-    }
-
     @Override
     public void onBackPressed() {
         DrawerLayout drawer = findViewById(R.id.drawer_layout);
@@ -238,6 +238,11 @@ public class HomeActivity extends AppCompatActivity
         } else {
             finish();
         }
+    }
+
+    @Override
+    public boolean onPrepareOptionsMenu(Menu menu) {
+        return super.onPrepareOptionsMenu(menu);
     }
 
     @Override

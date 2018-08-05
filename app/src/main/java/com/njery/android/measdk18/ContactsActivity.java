@@ -122,7 +122,7 @@ public class ContactsActivity extends AppCompatActivity
     @Override
     public boolean onContextItemSelected(MenuItem item) {
         AdapterView.AdapterContextMenuInfo info = (AdapterView.AdapterContextMenuInfo) item.getMenuInfo();
-        int index = info.position + 1;
+        long index = info.id;
         View view = info.targetView;
         Uri currentUri = ContentUris.withAppendedId(ContactsEntry.CONTENT_URI, index);
 

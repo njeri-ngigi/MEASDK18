@@ -188,9 +188,4 @@ public class MeaProvider extends ContentProvider{
 
         return rowsUpdated;
     }
-    public void deleteTables(){
-        SQLiteDatabase db = mDbHelper.getWritableDatabase();
-        db.execSQL(MeaDbHelper.DELETE_ENTRIES);
-        db.execSQL(MeaDbHelper.DELETE_CONTACT_ENTRIES);
-    }
     }
