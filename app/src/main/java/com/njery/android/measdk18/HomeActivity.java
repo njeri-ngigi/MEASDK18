@@ -128,7 +128,6 @@ public class HomeActivity extends AppCompatActivity
             setContentView(R.layout.activity_home);
             createNotification();
 
-            String username = MeaSharedPreferences.getPrefUserName(this);
             setTitle(R.string.app_name);
 
             getLoaderManager().initLoader(EXISTING_PET_LOADER, null, this);
@@ -159,7 +158,6 @@ public class HomeActivity extends AppCompatActivity
             mEmergencyText = MeaSharedPreferences.getPrefUserSos(HomeActivity.this);
 
             mFullNameTV = findViewById(R.id.tv_full_name);
-            mFullNameTV.setText(username);
 
             mButtonCallOperator = findViewById(R.id.button_call_operator);
             mButtonSendSos = findViewById(R.id.button_send_sos);
