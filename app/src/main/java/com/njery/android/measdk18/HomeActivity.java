@@ -511,6 +511,15 @@ public class HomeActivity extends AppCompatActivity
                 startActivity(intent);
             }
             if(text.equals("back")){
+                Context context = HomeActivity.this;
+                if(getApplicationContext() == context){
+                    return;
+                } else{
+                    Intent intent = new Intent(HomeActivity.this, HomeActivity.class);
+                    startActivity(intent);
+                }
+            }
+            if(text.equals("exit")){
                 finish();
             }
 
