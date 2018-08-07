@@ -82,6 +82,7 @@ public class ProfileEditActivity extends AppCompatActivity
         }
 
         MeaSharedPreferences.setPrefUserSos(this, sos);
+        MeaSharedPreferences.setPrefUserName(this, name);
 
         ContentValues values = new ContentValues();
         values.put(MeaEntry.COLUMN_FULL_NAME, name);

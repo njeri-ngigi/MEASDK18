@@ -17,9 +17,11 @@ import android.location.Location;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.support.annotation.NonNull;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
 import android.support.v4.app.ActivityCompat;
+import android.support.v4.content.ContextCompat;
 import android.support.v7.app.ActionBar;
 import android.telephony.SmsManager;
 import android.text.TextUtils;
@@ -43,28 +45,42 @@ import com.google.android.gms.tasks.OnSuccessListener;
 import com.njery.android.measdk18.data.MeaContract;
 import com.njery.android.measdk18.data.MeaContract.ContactsEntry;
 
+import java.io.File;
 import java.io.IOException;
+import java.lang.ref.WeakReference;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
 import java.util.Locale;
 
+import edu.cmu.pocketsphinx.Assets;
+import edu.cmu.pocketsphinx.Hypothesis;
+import edu.cmu.pocketsphinx.RecognitionListener;
+import edu.cmu.pocketsphinx.SpeechRecognizer;
+import edu.cmu.pocketsphinx.SpeechRecognizerSetup;
+
 public class HomeActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener,
-        LoaderManager.LoaderCallbacks<Cursor>{
+        LoaderManager.LoaderCallbacks<Cursor>,
+        RecognitionListener{
 
     private static final int REQUEST_LOCATION_PERMISSION = 1;
     private static final int REQUEST_CALL_PERMISSION = 2;
     private static final int REQUEST_SMS_PERMISSION = 3;
+    private static final int REQUEST_RECORD_AUDIO_PERMISSION = 4;
+
     private static final int EXISTING_PET_LOADER = 0;
 
     private Button mButtonCallOperator, mButtonSendSos;
     private TextView mFullNameTV;
 
-    FusedLocationProviderClient mFusedLocationClient;
+    private FusedLocationProviderClient mFusedLocationClient;
 
     String mEmergencyText;
+
+    private SpeechRecognizer mRecognizer;
+    private static final String MENU_SEARCH = "menu";
 
     public  void createNotification(){
         Intent homeIntent = new Intent(this, HomeActivity.class);
@@ -124,6 +140,21 @@ public class HomeActivity extends AppCompatActivity
             Toolbar toolbar = findViewById(R.id.toolbar);
             setSupportActionBar(toolbar);
 
+            // check permissions
+            int permissionCheck = ContextCompat.checkSelfPermission(
+                    getApplicationContext(),
+                    Manifest.permission.RECORD_AUDIO);
+            if (permissionCheck != PackageManager.PERMISSION_GRANTED){
+                ActivityCompat.requestPermissions(this,
+                        new String[] {Manifest.permission.RECORD_AUDIO},
+                        REQUEST_RECORD_AUDIO_PERMISSION);
+                return;
+            }
+
+            // Initializing recognizer is time-consuming and involves IO
+            // Execute it in async task
+            new SetupSpeechTask(this).execute();
+
             mFusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
             mEmergencyText = MeaSharedPreferences.getPrefUserSos(HomeActivity.this);
 
@@ -170,6 +201,14 @@ public class HomeActivity extends AppCompatActivity
             navigationView.setNavigationItemSelectedListener(this);
 
         }
+    }
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+        String username = MeaSharedPreferences.getPrefUserName(this);
+        mFullNameTV.setText(username);
+
     }
 
     private void call(String number){
@@ -364,6 +403,155 @@ public class HomeActivity extends AppCompatActivity
 
     @Override
     public void onLoaderReset(Loader<Cursor> loader) {
+
+    }
+
+    private static class SetupSpeechTask extends AsyncTask<Void, Void, Exception>{
+        WeakReference<HomeActivity> mActivityReference;
+
+        SetupSpeechTask(HomeActivity activity){
+            this.mActivityReference = new WeakReference<>(activity);
+        }
+
+        @Override
+        protected Exception doInBackground(Void... voids) {
+            try{
+                Assets assets = new Assets(mActivityReference.get());
+                File assetDir = assets.syncAssets();
+                mActivityReference.get().setupRecognizer(assetDir);
+            } catch (IOException e){
+                return e;
+            }
+            return null;
+        }
+
+        @Override
+        protected void onPostExecute(Exception e) {
+            if (e != null){
+                Toast.makeText(mActivityReference.get(),
+                        "Failed to initialize speech recognizer",
+                        Toast.LENGTH_LONG).show();
+            } else {
+                Toast.makeText(mActivityReference.get(),
+                        "Use call, send, list, profile, contacts or back speech commands",
+                        Toast.LENGTH_LONG).show();
+                mActivityReference.get().reset();
+            }
+        }
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+
+        if (requestCode == REQUEST_RECORD_AUDIO_PERMISSION){
+            if (grantResults.length > 0
+                    && grantResults[0] == PackageManager.PERMISSION_GRANTED){
+                new SetupSpeechTask(this).execute();
+            } else {
+                finish();
+            }
+        }
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+
+        if(mRecognizer != null) {
+            mRecognizer.cancel();
+            mRecognizer.shutdown();
+        }
+    }
+
+    @Override
+    public void onBeginningOfSpeech() {
+
+    }
+
+    @Override
+    public void onEndOfSpeech() {
+        reset();
+    }
+
+    @Override
+    public void onPartialResult(Hypothesis hypothesis) {
+
+    }
+
+    @Override
+    public void onResult(Hypothesis hypothesis) {
+        if(hypothesis != null){
+            String text = hypothesis.getHypstr().trim();
+
+            if(text.equals("call")){
+                String number = "+254702402781";
+                Intent callIntent = new Intent(Intent.ACTION_CALL);
+                callIntent.setData(Uri.parse("tel: " + number));
+
+                if (ActivityCompat.checkSelfPermission(HomeActivity.this,
+                        Manifest.permission.CALL_PHONE) != PackageManager.PERMISSION_GRANTED){
+
+                    ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.CALL_PHONE},
+                            REQUEST_CALL_PERMISSION);
+                }
+                startActivity(callIntent);
+            }
+            if(text.equals("send")){
+
+            }
+            if(text.equals("list")){
+
+            }
+
+            if(text.equals("profile")){
+                Intent intent = new Intent(HomeActivity.this, ProfileActivity.class);
+                startActivity(intent);
+            }
+            if(text.equals("contacts")){
+                Intent intent = new Intent(HomeActivity.this, ContactsActivity.class);
+                startActivity(intent);
+            }
+            if(text.equals("back")){
+                finish();
+            }
+
+            Toast.makeText(getApplicationContext(),
+                    text, Toast.LENGTH_LONG).show();
+        }
+
+    }
+
+    @Override
+    public void onError(Exception e) {
+        String error = e.getMessage();
+        Toast.makeText(this, error, Toast.LENGTH_LONG).show();
+
+    }
+
+    @Override
+    public void onTimeout() {
+        reset();
+    }
+
+    private void reset(){
+        mRecognizer.stop();
+        mRecognizer.startListening(MENU_SEARCH);
+    }
+
+    private void setupRecognizer(File assetsDir) throws IOException{
+        mRecognizer = SpeechRecognizerSetup.defaultSetup()
+                .setAcousticModel(new File(assetsDir, "en-us-ptm"))
+                .setDictionary(new File(assetsDir, "cmudict-en-us.dict"))
+                .setRawLogDir(assetsDir) // To disable logging of raw audio comment out this call (takes a lot of space
+                .setKeywordThreshold(1e-20f)
+                .getRecognizer();
+
+        mRecognizer.addListener(this);
+
+        // Create grammar search for digit recognition
+        File menuGrammar = new File(assetsDir, "mea.gram");
+        mRecognizer.addKeywordSearch(MENU_SEARCH, menuGrammar);
 
     }
 }
