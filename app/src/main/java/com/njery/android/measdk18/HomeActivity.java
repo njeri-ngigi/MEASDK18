@@ -2,6 +2,8 @@ package com.njery.android.measdk18;
 
 import android.Manifest;
 import android.app.LoaderManager;
+import android.app.Notification;
+import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.Context;
 import android.content.CursorLoader;
@@ -64,6 +66,39 @@ public class HomeActivity extends AppCompatActivity
 
     String mEmergencyText;
 
+    public  void createNotification(){
+        Intent homeIntent = new Intent(this, HomeActivity.class);
+
+        if (ActivityCompat.checkSelfPermission(HomeActivity.this,
+                Manifest.permission.CALL_PHONE) != PackageManager.PERMISSION_GRANTED){
+            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.CALL_PHONE},
+                    REQUEST_CALL_PERMISSION);
+        }
+
+        String number = "+254702402781";
+        Intent callIntent = new Intent(Intent.ACTION_CALL);
+        callIntent.setData(Uri.parse("tel: " + number));
+
+        PendingIntent pendingCallIntent = PendingIntent.getActivity(this, (int) System.currentTimeMillis(), callIntent, 0);
+        PendingIntent pendingSOSIntent = PendingIntent.getActivity(this, (int) System.currentTimeMillis(), homeIntent, 0);
+        PendingIntent pendingHomeIntent = PendingIntent.getActivity(this, (int) System.currentTimeMillis(), homeIntent, 0);
+
+        Notification notification = new Notification.Builder(this)
+                .setContentTitle("M.E.A")
+                .setContentText("I'm always here ...")
+                .setSmallIcon(R.drawable.ic_mea_white)
+                .addAction(R.drawable.ic_call, "", pendingCallIntent)
+                .addAction(R.drawable.ic_home, "", pendingHomeIntent)
+                .addAction(R.drawable.ic_sms, "", pendingSOSIntent)
+                .build();
+
+        NotificationManager notificationManager = (NotificationManager)
+                getSystemService(NOTIFICATION_SERVICE);
+        notification.flags |= Notification.FLAG_NO_CLEAR;
+        notificationManager.notify(0, notification);
+
+    }
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -75,6 +110,7 @@ public class HomeActivity extends AppCompatActivity
             finish();
         } else {
             setContentView(R.layout.activity_home);
+            createNotification();
 
             String username = MeaSharedPreferences.getPrefUserName(this);
             setTitle(R.string.app_name);
