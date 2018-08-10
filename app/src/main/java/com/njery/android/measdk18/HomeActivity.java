@@ -241,7 +241,6 @@ public class HomeActivity extends AppCompatActivity
             public void onSuccess(Location location) {
                 if (location != null){
                     new FetchAddressTask(HomeActivity.this).execute(location);
-
                 }
                 else{
                     Toast.makeText(HomeActivity.this, "Location unavailable", Toast.LENGTH_LONG).show();
@@ -496,7 +495,7 @@ public class HomeActivity extends AppCompatActivity
                 startActivity(callIntent);
             }
             if(text.equals("send")){
-
+                getLocation();
             }
             if(text.equals("list")){
 
